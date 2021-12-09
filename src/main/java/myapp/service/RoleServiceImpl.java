@@ -1,29 +1,56 @@
 package myapp.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import myapp.dao.RoleDAO;
+import myapp.dao.RoleDaoImpl;
 import myapp.model.Role;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class RoleServiceImpl implements RoleService {
 
-    private final RoleDAO roleDAO;
+    RoleDaoImpl roleDao;
 
-    public RoleServiceImpl(RoleDAO roleDAO) {
-        this.roleDAO = roleDAO;
+    @Autowired
+    public void setRoleDao(RoleDaoImpl roleDao) {
+        this.roleDao = roleDao;
     }
 
     @Override
-    public List<Role> allRoles() {
-        return roleDAO.allRoles();
+    public void saveRole(Role role) {
+        roleDao.saveRole(role);
     }
 
     @Override
-    public Role findRoleByName(String name) {
-        return roleDAO.findRoleByName(name);
+    @Transactional(readOnly = true)
+    public Role getRoleById(Long id) {
+        return roleDao.getRoleById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Role getRoleByName(String name) {
+        return roleDao.getRoleByName(name);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Role> getAllRoles() {
+        return roleDao.getAllRoles();
+    }
+
+    @Override
+    public Set<Role> getSetOfRoles(String[] roles) {
+        Set<Role> rolesSet = new HashSet<>();
+
+        for (String role : roles) {
+            rolesSet.add(roleDao.getRoleByName(role));
+        }
+        return rolesSet;
     }
 }

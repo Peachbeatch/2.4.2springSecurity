@@ -1,10 +1,11 @@
-package myapp.service;
+package myapp.dao;
+
 
 import myapp.model.User;
 
 import java.util.List;
 
-public interface UserService {
+public interface UserDao {
 
     void saveUser(User user);
 

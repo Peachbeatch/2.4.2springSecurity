@@ -1,11 +1,11 @@
-package myapp.service;
+package myapp.dao;
+
 
 import myapp.model.Role;
 
 import java.util.List;
-import java.util.Set;
 
-public interface RoleService {
+public interface RoleDao {
 
     void saveRole(Role role);
 
@@ -14,6 +14,4 @@ public interface RoleService {
     Role getRoleByName(String name);
 
     List<Role> getAllRoles();
-
-    Set<Role> getSetOfRoles(String[] roles);
 }

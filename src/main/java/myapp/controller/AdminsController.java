@@ -1,85 +1,65 @@
 package myapp.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import myapp.model.Role;
 import myapp.model.User;
 import myapp.service.RoleService;
 import myapp.service.UserService;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 @Controller
+@RequestMapping("/admin")
 public class AdminsController {
+
     private final UserService userService;
     private final RoleService roleService;
 
+    @Autowired
     public AdminsController(UserService userService, RoleService roleService) {
         this.userService = userService;
         this.roleService = roleService;
     }
-
-    @RequestMapping(value = "login", method = RequestMethod.GET)
-    public String loginPage() {
-        return "login";
+    @GetMapping()
+    public String index(Model model) {
+        model.addAttribute("users", userService.getAllUsers());
+        return "admin/index";
     }
 
-    @GetMapping("/admin")
-    public String findAll(ModelMap model){
-        List<User> users = userService.getAllUser();
-        model.addAttribute("users", users);
-        return "all_users";
-    }
-    @GetMapping("/new-user")
-    public String createUserForm (ModelMap modelMap) {
-        modelMap.addAttribute("user", new User());
-        modelMap.addAttribute("all_role", roleService.allRoles());
-        return "user-form-add";
+    @GetMapping("/{id}/user_info")
+    public String getUser(@PathVariable("id") Long id, Model model) {
+        model.addAttribute("user", userService.getUserById(id));
+        return "admin/user_info";
     }
 
-    @PostMapping("/new-user")
-    public String saveUser (@ModelAttribute("user") User user,
-                            @RequestParam(value = "role") String[] roles) {
-        Set<Role> roleSet = new HashSet<>();
-        if (roles != null) {
-            for (String roleName : roles) {
-                roleSet.add(roleService.findRoleByName(roleName));
-            }
-        }
-        user.setRoles(roleSet);
+    @GetMapping("/new")
+    public String createUser(@ModelAttribute("newUser") User user, Model model) {
+        model.addAttribute("allRoles", roleService.getAllRoles());
+        return "admin/new_user";
+    }
+
+    @PostMapping()
+    public String addUser(@ModelAttribute("newUser") User user) {
         userService.saveUser(user);
         return "redirect:/admin";
     }
 
-    @GetMapping("/user-delete/{id}")
-    public String deleteUser (@PathVariable("id") Long id) {
-        userService.deleteById(id);
+    @GetMapping("/{id}/edit")
+    public String editUser(@PathVariable("id") Long id, Model model) {
+        model.addAttribute("existingUser", userService.getUserById(id));
+        model.addAttribute("allRoles", roleService.getAllRoles());
+        return "admin/edit";
+    }
+
+    @PatchMapping("/{id}")
+    public String updateUser(@ModelAttribute("existingUser") User user, @PathVariable("id") Long id) {
+        userService.updateUser(id, user);
         return "redirect:/admin";
     }
 
-    @GetMapping("/user-edit/{id}")
-    public String updateUserForm (@PathVariable("id") Long id, ModelMap modelMap) {
-        User user = userService.getById(id);
-        modelMap.addAttribute("user", user);
-        modelMap.addAttribute("all_role", roleService.allRoles());
-        return "user-form-update";
-    }
-
-    @PatchMapping("/user-edit/{id}")
-    public String updateUser (@ModelAttribute("user") User user,
-                              @RequestParam(value = "role") String[] roles) {
-        Set<Role> roleSet = new HashSet<>();
-        if (roles != null) {
-            for (String roleName : roles) {
-                roleSet.add(roleService.findRoleByName(roleName));
-            }
-        }
-        user.setRoles(roleSet);
-        userService.update(user);
+    @DeleteMapping("/{id}")
+    public String deleteUser(@PathVariable("id") Long id) {
+        userService.removeUserById(id);
         return "redirect:/admin";
     }
 }
-

@@ -1,60 +1,74 @@
 package myapp.service;
 
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import myapp.dao.UserDAO;
-import myapp.model.Role;
+import myapp.dao.UserDaoImpl;
 import myapp.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
-@Component
 @Transactional
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService, UserDetailsService {
 
-    private final UserDAO userDAO;
-    private final Set<Role> allRoles;
+    UserDaoImpl userDao;
+    private BCryptPasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserDAO userDAO, Set<Role> allRoles){
-        this.userDAO = userDAO;
-        this.allRoles = allRoles;
+    @Autowired
+    public void setUserDao(UserDaoImpl userDao) {
+        this.userDao = userDao;
     }
 
-    @Transactional(readOnly = true)
-    @Override
-    public List<User> getAllUser() {
-        return userDAO.getAllUser();
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public User getById(Long id) {
-        return userDAO.getById(id);
+    @Autowired
+    public void setPasswordEncoder(@Lazy BCryptPasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void saveUser(User user) {
-        userDAO.saveUser(user);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userDao.saveUser(user);
     }
 
     @Override
-    public void deleteById(Long id) {
-        userDAO.deleteById(id);
+    public void updateUser(Long id, User user) {
+        if (!user.getPassword().equals(getUserById(user.getId()).getPassword())) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        userDao.updateUser(id, user);
     }
 
     @Override
-    public void update(User user) {
-        userDAO.update(user);
-    }
-
     @Transactional(readOnly = true)
+    public User getUserById(Long id) {
+        return userDao.getUserById(id);
+    }
+
     @Override
-    public User getUserByName(String name) {
-        return userDAO.getUserByName(name);
+    @Transactional(readOnly = true)
+    public User getByName(String name) {
+        return userDao.getByName(name);
+    }
+
+    @Override
+    public void removeUserById(Long id) {
+        userDao.removeUserById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> getAllUsers() {
+        return userDao.getAllUsers();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return getByName(username);
     }
 }
-

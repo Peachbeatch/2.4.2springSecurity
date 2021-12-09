@@ -6,28 +6,24 @@ import javax.persistence.*;
 import java.util.Objects;
 import java.util.Set;
 
-// Этот класс реализует интерфейс GrantedAuthority, в котором необходимо переопределить только один метод getAuthority() (возвращает имя роли).
-// Имя роли должно соответствовать шаблону: «ROLE_ИМЯ», например, ROLE_USER.
-
 @Entity
-@Table(name = "roles")
+@Table(name="roles")
 public class Role implements GrantedAuthority {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
-
-    @Column(name = "name", unique = true)
+    @Column
     private String name;
-
-    @ManyToMany(mappedBy = "roles")
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.EAGER)
     private Set<User> users;
 
-    public Role() { }
-
-    public Role(Long id, String name, Set<User> users) {
-        this.id = id;
+    public Role(String name) {
         this.name = name;
-        this.users = users;
+    }
+
+    public Role() {
     }
 
     public Long getId() {
@@ -54,17 +50,26 @@ public class Role implements GrantedAuthority {
         this.users = users;
     }
 
-    protected boolean canEqual(final Object other) {
-        return other instanceof Role;
+    @Override
+    public String toString() {
+        return name;
     }
 
     @Override
     public String getAuthority() {
-        return getName();
+        return name;
     }
 
     @Override
-    public String toString() {
-        return name;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Role)) return false;
+        Role role = (Role) o;
+        return Objects.equals(getId(), role.getId()) && Objects.equals(getName(), role.getName()) && Objects.equals(getUsers(), role.getUsers());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getName(), getUsers());
     }
 }
